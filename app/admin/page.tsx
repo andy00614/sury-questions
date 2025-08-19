@@ -2,46 +2,41 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  BarChart, Bar, PieChart, Pie, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, 
-  ResponsiveContainer, Cell 
-} from "recharts";
-import { Users, TrendingUp, Calendar, Smartphone, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { useLanguage } from "@/lib/language-context";
 import LanguageSwitcher from "@/components/language-switcher";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
-
-interface Statistics {
-  totalResponses: number;
-  todayResponses: number;
-  deviceStats: Array<{ device_type: string; count: number }>;
-  ageStats: Array<{ age_group: string; count: number }>;
-  genderStats: Array<{ gender: string; count: number }>;
-  regionStats: Array<{ region: string; count: number }>;
-  aiUsageStats: Array<{ ai_agent_awareness: string; count: number }>;
-  dailyStats: Array<{ date: string; count: number }>;
+interface Question {
+  id: number;
+  section: string;
+  section_en?: string;
+  question: string;
+  question_en?: string;
+  type: string;
+  options?: Array<{
+    value: string;
+    label: string;
+    label_en?: string;
+  }>;
 }
 
-interface Response {
+interface DetailedResponse {
   id: number;
   created_at: string;
-  gender?: string;
-  age_group?: string;
-  region?: string;
-  device_type?: string;
-  ai_agent_awareness?: string;
+  answers: any;
+  raw_data: string;
+  [key: string]: any;
 }
 
-export default function AdminDashboard() {
-  const { t } = useLanguage();
-  const [statistics, setStatistics] = useState<Statistics | null>(null);
-  const [responses, setResponses] = useState<Response[]>([]);
+export default function ResponsesPage() {
+  const { t, language } = useLanguage();
+  const [responses, setResponses] = useState<DetailedResponse[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedResponse, setSelectedResponse] = useState<DetailedResponse | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -49,25 +44,55 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     try {
-      const [statsRes, responsesRes] = await Promise.all([
-        fetch('/api/admin/statistics'),
-        fetch('/api/survey/stats')
+      const [responsesRes, questionsRes] = await Promise.all([
+        fetch('/api/survey/stats'),
+        fetch('/api/survey/questions')
       ]);
       
-      const statsData = await statsRes.json();
       const responsesData = await responsesRes.json();
+      const questionsData = await questionsRes.json();
       
-      if (statsData.success) {
-        setStatistics(statsData.data);
-      }
       if (responsesData.success) {
         setResponses(responsesData.responses);
+      }
+      if (questionsData.success) {
+        setQuestions(questionsData.questions);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const parseRawData = (rawData: string) => {
+    try {
+      return JSON.parse(rawData);
+    } catch {
+      return null;
+    }
+  };
+
+  const getAnswerDisplay = (question: Question, answer: any) => {
+    if (!answer) return '-';
+    
+    if (question.type === 'text') {
+      return answer;
+    }
+    
+    if (question.type === 'multiple' && Array.isArray(answer)) {
+      return answer.map(value => {
+        const option = question.options?.find(opt => opt.value === value);
+        return language === 'zh' ? (option?.label || value) : (option?.label_en || option?.label || value);
+      }).join(', ');
+    }
+    
+    if (question.type === 'single') {
+      const option = question.options?.find(opt => opt.value === answer);
+      return language === 'zh' ? (option?.label || answer) : (option?.label_en || option?.label || answer);
+    }
+    
+    return String(answer);
   };
 
   if (loading) {
@@ -81,225 +106,132 @@ export default function AdminDashboard() {
     );
   }
 
-  const formatGenderLabel = (value: string) => {
-    return t(`gender.${value}`) || value;
-  };
+  if (selectedResponse) {
+    // Use answers directly from database or parse from raw_data as fallback
+    const answers = selectedResponse.answers || parseRawData(selectedResponse.raw_data)?.answers || {};
 
-  const formatDeviceLabel = (value: string) => {
-    return t(`device.${value}`) || value;
-  };
+    return (
+      <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+        <LanguageSwitcher variant="floating" />
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center mb-6">
+            <Button 
+              variant="ghost" 
+              onClick={() => setSelectedResponse(null)}
+              className="mr-4"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              {language === 'zh' ? '返回列表' : 'Back to List'}
+            </Button>
+            <h1 className="text-2xl font-bold">
+              {language === 'zh' ? '问卷详情' : 'Survey Details'} #{selectedResponse.id}
+            </h1>
+          </div>
 
-  const formatAgeLabel = (value: string) => {
-    return t(`age.${value}`) || value;
-  };
+          <div className="mb-4 text-sm text-gray-600">
+            {language === 'zh' ? '提交时间' : 'Submitted'}: {format(new Date(selectedResponse.created_at), 'yyyy-MM-dd HH:mm:ss')}
+          </div>
 
-  const formatAIAwarenessLabel = (value: string) => {
-    return t(`ai.${value}`) || value;
-  };
+          <div className="space-y-6">
+            {questions.map((question) => (
+              <Card key={question.id}>
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    <span className="text-blue-600 text-sm font-normal">
+                      {language === 'zh' ? question.section : (question.section_en || question.section)}
+                    </span>
+                    <div className="mt-1">
+                      Q{question.id}: {language === 'zh' ? question.question : (question.question_en || question.question)}
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-gray-50 p-3 rounded">
+                    {getAnswerDisplay(question, answers[question.id.toString()])}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <LanguageSwitcher variant="floating" />
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">{t('admin.title')}</h1>
-        
-        {/* 统计卡片 */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('admin.total_responses')}</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{statistics?.totalResponses || 0}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('admin.today_responses')}</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{statistics?.todayResponses || 0}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('admin.device_types')}</CardTitle>
-              <Smartphone className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm">
-                {statistics?.deviceStats.map(d => (
-                  <div key={d.device_type}>
-                    {formatDeviceLabel(d.device_type)}: {d.count}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('admin.daily_average')}</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {statistics?.dailyStats.length 
-                  ? Math.round(statistics.totalResponses / statistics.dailyStats.length)
-                  : 0}
-              </div>
-            </CardContent>
-          </Card>
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold">
+            {language === 'zh' ? '问卷回答详情' : 'Survey Responses Details'}
+          </h1>
+          <Link href="/admin">
+            <Button variant="outline">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              {language === 'zh' ? '返回仪表板' : 'Back to Dashboard'}
+            </Button>
+          </Link>
         </div>
 
-        {/* 图表区域 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* 性别分布饼图 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('admin.gender_distribution')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={statistics?.genderStats.map(g => ({
-                      name: formatGenderLabel(g.gender),
-                      value: g.count
-                    }))}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {statistics?.genderStats.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* 年龄分布柱状图 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('admin.age_distribution')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={statistics?.ageStats.map(a => ({
-                  age: formatAgeLabel(a.age_group),
-                  count: a.count
-                }))}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="age" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#0088FE" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* AI认知度饼图 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('admin.ai_awareness')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={statistics?.aiUsageStats.map(a => ({
-                      name: formatAIAwarenessLabel(a.ai_agent_awareness),
-                      value: a.count
-                    }))}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {statistics?.aiUsageStats.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* 每日提交趋势 */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('admin.daily_trend')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={statistics?.dailyStats.slice().reverse().map(d => ({
-                  date: format(new Date(d.date), 'MM/dd'),
-                  count: d.count
-                }))}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="count" stroke="#8884d8" />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* 数据表格 */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>{t('admin.recent_data')}</CardTitle>
-            <Link href="/admin/responses">
-              <Button variant="outline" size="sm">
-                <ExternalLink className="w-4 h-4 mr-2" />
-                {t('admin.view_all_responses')}
-              </Button>
-            </Link>
+          <CardHeader>
+            <CardTitle>
+              {language === 'zh' ? '所有问卷回答' : 'All Survey Responses'} ({responses.length})
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-2">{t('admin.table.id')}</th>
-                    <th className="text-left p-2">{t('admin.table.time')}</th>
-                    <th className="text-left p-2">{t('admin.table.gender')}</th>
-                    <th className="text-left p-2">{t('admin.table.age')}</th>
-                    <th className="text-left p-2">{t('admin.table.region')}</th>
-                    <th className="text-left p-2">{t('admin.table.device')}</th>
-                    <th className="text-left p-2">{t('admin.table.ai_awareness')}</th>
+                    <th className="text-left p-3">ID</th>
+                    <th className="text-left p-3">{language === 'zh' ? '提交时间' : 'Submitted'}</th>
+                    <th className="text-left p-3">{language === 'zh' ? '设备类型' : 'Device'}</th>
+                    <th className="text-left p-3">{language === 'zh' ? '年龄' : 'Age'}</th>
+                    <th className="text-left p-3">{language === 'zh' ? 'AI使用情况' : 'AI Usage'}</th>
+                    <th className="text-left p-3">{language === 'zh' ? '操作' : 'Actions'}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {responses.slice(0, 10).map((response) => (
-                    <tr key={response.id} className="border-b hover:bg-gray-50">
-                      <td className="p-2">{response.id}</td>
-                      <td className="p-2">{format(new Date(response.created_at), 'yyyy-MM-dd HH:mm')}</td>
-                      <td className="p-2">{response.gender ? formatGenderLabel(response.gender) : '-'}</td>
-                      <td className="p-2">{response.age_group ? formatAgeLabel(response.age_group) : '-'}</td>
-                      <td className="p-2">{response.region || '-'}</td>
-                      <td className="p-2">{response.device_type ? formatDeviceLabel(response.device_type) : '-'}</td>
-                      <td className="p-2">{response.ai_agent_awareness ? formatAIAwarenessLabel(response.ai_agent_awareness) : '-'}</td>
-                    </tr>
-                  ))}
+                  {responses.map((response) => {
+                    const answers = response.answers || parseRawData(response.raw_data)?.answers || {};
+                    
+                    return (
+                      <tr key={response.id} className="border-b hover:bg-gray-50">
+                        <td className="p-3">{response.id}</td>
+                        <td className="p-3">{format(new Date(response.created_at), 'yyyy-MM-dd HH:mm')}</td>
+                        <td className="p-3">
+                          {getAnswerDisplay(
+                            questions.find(q => q.id === 4) || { id: 4, section: '', question: '', type: 'single', options: [] },
+                            answers['4']
+                          )}
+                        </td>
+                        <td className="p-3">
+                          {getAnswerDisplay(
+                            questions.find(q => q.id === 12) || { id: 12, section: '', question: '', type: 'single', options: [] },
+                            answers['12']
+                          )}
+                        </td>
+                        <td className="p-3">
+                          {getAnswerDisplay(
+                            questions.find(q => q.id === 1) || { id: 1, section: '', question: '', type: 'single', options: [] },
+                            answers['1']
+                          )}
+                        </td>
+                        <td className="p-3">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setSelectedResponse(response)}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            {language === 'zh' ? '查看' : 'View'}
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

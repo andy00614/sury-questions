@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getAllQuestions } from '@/lib/db-postgres';
+import { getAllQuestions } from '@/lib/db';
 
 export async function GET() {
   try {
-    const questions = await getAllQuestions();
+    const questions = getAllQuestions();
     
     return NextResponse.json({
       success: true,

@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getAllResponses, getResponsesCount } from '@/lib/db-postgres';
+import { getAllResponses, getResponsesCount } from '@/lib/db';
 
 export async function GET() {
   try {
-    const count = await getResponsesCount();
-    const responses = await getAllResponses();
+    const count = getResponsesCount();
+    const responses = getAllResponses();
     
     return NextResponse.json({
       success: true,

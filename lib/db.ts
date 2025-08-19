@@ -138,11 +138,11 @@ export function saveSurveyResponse(data: any, metadata?: { ipAddress?: string; u
     JSON.stringify(answers['13']) || null, // news_sources (multiple choice)
     answers['14'] || null, // news_frequency
     JSON.stringify(answers['15']) || null, // knowledge_acquisition (multiple choice)
-    answers['16'] || null, // age_group
-    answers['17'] || null, // gender
-    answers['18'] || null, // region
-    answers['19'] || null, // occupation
-    answers['20'] || null, // income_level
+    answers['12'] || null, // age_group (correct mapping: question 12 is age)
+    answers['13'] || null, // gender (actually marital status, but using this field)
+    null, // region (not in current questions)
+    answers['15'] || null, // occupation (using education level)
+    answers['14'] || null, // income_level (using income question)
     JSON.stringify(data) // raw_data for reference
   );
 

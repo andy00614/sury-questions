@@ -34,6 +34,7 @@ export default function SurveyForm() {
   const [answers, setAnswers] = useState<Record<number, string | string[]>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchQuestions();
@@ -127,6 +128,7 @@ export default function SurveyForm() {
   };
 
   const handleSubmit = async () => {
+    setIsSubmitting(true);
     try {
       const response = await fetch('/api/survey', {
         method: 'POST',
@@ -144,6 +146,8 @@ export default function SurveyForm() {
     } catch (error) {
       console.error('Submit error:', error);
       alert(language === 'zh' ? '提交失败，请重试' : 'Submission failed, please try again');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -257,10 +261,17 @@ export default function SurveyForm() {
           {currentQuestionIndex === surveyQuestions.length - 1 ? (
             <Button
               onClick={handleSubmit}
-              disabled={!canGoNext()}
+              disabled={!canGoNext() || isSubmitting}
               className="flex items-center gap-2"
             >
-              {t('survey.submit')}
+              {isSubmitting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  {language === 'zh' ? '提交中...' : 'Submitting...'}
+                </>
+              ) : (
+                t('survey.submit')
+              )}
             </Button>
           ) : (
             <Button

@@ -190,7 +190,7 @@ export default function ResponsesPage() {
                     <th className="text-left p-3">{language === 'zh' ? '设备类型' : 'Device'}</th>
                     <th className="text-left p-3">{language === 'zh' ? '年龄' : 'Age'}</th>
                     <th className="text-left p-3">{language === 'zh' ? 'AI使用情况' : 'AI Usage'}</th>
-                    <th className="text-left p-3">{language === 'zh' ? '操作' : 'Actions'}</th>
+                    <th className="text-left p-3">{language === 'zh' ? '详情' : 'Details'}</th>
                   </tr>
                 </thead>
                 <tbody>

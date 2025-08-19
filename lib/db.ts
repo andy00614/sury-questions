@@ -238,6 +238,71 @@ export function hasQuestions() {
   return result.count > 0;
 }
 
+// Get statistics for dashboard
+export function getStatistics() {
+  const totalResponses = (db.prepare('SELECT COUNT(*) as count FROM survey_responses').get() as { count: number }).count;
+  
+  const todayResponses = (db.prepare(`
+    SELECT COUNT(*) as count FROM survey_responses 
+    WHERE DATE(created_at) = DATE('now', 'localtime')
+  `).get() as { count: number }).count;
+  
+  const deviceStats = db.prepare(`
+    SELECT device_type, COUNT(*) as count 
+    FROM survey_responses 
+    WHERE device_type IS NOT NULL
+    GROUP BY device_type
+  `).all() as Array<{ device_type: string; count: number }>;
+  
+  const ageStats = db.prepare(`
+    SELECT age_group, COUNT(*) as count 
+    FROM survey_responses 
+    WHERE age_group IS NOT NULL
+    GROUP BY age_group
+    ORDER BY age_group
+  `).all() as Array<{ age_group: string; count: number }>;
+  
+  const genderStats = db.prepare(`
+    SELECT gender, COUNT(*) as count 
+    FROM survey_responses 
+    WHERE gender IS NOT NULL
+    GROUP BY gender
+  `).all() as Array<{ gender: string; count: number }>;
+  
+  const regionStats = db.prepare(`
+    SELECT region, COUNT(*) as count 
+    FROM survey_responses 
+    WHERE region IS NOT NULL
+    GROUP BY region
+  `).all() as Array<{ region: string; count: number }>;
+  
+  const aiUsageStats = db.prepare(`
+    SELECT ai_agent_awareness, COUNT(*) as count 
+    FROM survey_responses 
+    WHERE ai_agent_awareness IS NOT NULL
+    GROUP BY ai_agent_awareness
+  `).all() as Array<{ ai_agent_awareness: string; count: number }>;
+  
+  const dailyStats = db.prepare(`
+    SELECT DATE(created_at) as date, COUNT(*) as count 
+    FROM survey_responses 
+    GROUP BY DATE(created_at)
+    ORDER BY date DESC
+    LIMIT 30
+  `).all() as Array<{ date: string; count: number }>;
+  
+  return {
+    totalResponses,
+    todayResponses,
+    deviceStats,
+    ageStats,
+    genderStats,
+    regionStats,
+    aiUsageStats,
+    dailyStats
+  };
+}
+
 // Initialize database on module load
 initDatabase();
 

@@ -140,14 +140,18 @@ export default function SurveyForm() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-8 text-center">
-            <div className="text-6xl mb-4">✅</div>
-            <h2 className="text-2xl font-bold mb-2">提交成功！</h2>
-            <p className="text-gray-600">感谢您参与我们的市场调查</p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-white flex items-center justify-center p-8">
+        <div className="text-center max-w-sm">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-3">提交成功</h2>
+          <p className="text-gray-500 leading-relaxed">
+            感谢您抽出宝贵时间参与我们的调查，您的反馈对我们非常重要。
+          </p>
+        </div>
       </div>
     );
   }
@@ -155,16 +159,18 @@ export default function SurveyForm() {
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-2xl mx-auto">
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm text-gray-600">
-              问题 {currentQuestionIndex + 1} / {surveyQuestions.length}
-            </span>
-            <span className="text-sm text-gray-600">
-              {Math.round(progress)}%
-            </span>
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-semibold text-slate-800">
+                问题 {currentQuestionIndex + 1}
+              </span>
+              <span className="text-sm text-slate-500 font-medium">
+                / {surveyQuestions.length}
+              </span>
+            </div>
           </div>
-          <Progress value={progress} className="h-2" />
+          <Progress value={progress} className="h-3 bg-slate-100" />
         </div>
 
         <Card>

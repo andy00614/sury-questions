@@ -221,7 +221,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
     
     // 使用预定义的翻译
-    const translation = translations[language]?.[key];
+    const translation = (translations[language] as Record<string, string>)?.[key];
     if (translation) {
       return translation;
     }

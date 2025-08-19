@@ -16,10 +16,11 @@ async function checkQuestions() {
     console.log('');
     
     questions.forEach((q, index) => {
-      console.log(`${index + 1}. [ID: ${q.id}] ${q.section}`);
-      console.log(`   Question: ${q.question}`);
-      console.log(`   Type: ${q.type}, Required: ${q.required}`);
-      console.log(`   Options: ${q.options?.length || 0} options`);
+      const question = q as { id: number; section: string; question: string; type: string; required: boolean; options?: unknown[] };
+      console.log(`${index + 1}. [ID: ${question.id}] ${question.section}`);
+      console.log(`   Question: ${question.question}`);
+      console.log(`   Type: ${question.type}, Required: ${question.required}`);
+      console.log(`   Options: ${question.options?.length || 0} options`);
       console.log('');
     });
     

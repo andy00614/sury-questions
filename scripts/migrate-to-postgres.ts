@@ -60,38 +60,39 @@ async function migrateToPostgres() {
     for (const response of responses) {
       try {
         // Transform the data format
-        const answers: Record<string, any> = {};
+        const answers: Record<string, unknown> = {};
+        const responseData = response as Record<string, unknown>;
         
         // Map the fields back to question IDs
-        if (response.ai_agent_awareness) answers['1'] = response.ai_agent_awareness;
-        if (response.ai_usage_purpose) answers['2'] = JSON.parse(response.ai_usage_purpose);
-        if (response.ai_usage_frequency) answers['3'] = response.ai_usage_frequency;
-        if (response.device_type) answers['4'] = response.device_type;
-        if (response.screen_time) answers['5'] = response.screen_time;
-        if (response.most_used_app) answers['6'] = JSON.parse(response.most_used_app);
-        if (response.video_platforms) answers['7'] = JSON.parse(response.video_platforms);
-        if (response.video_watch_time) answers['8'] = response.video_watch_time;
-        if (response.non_video_entertainment) answers['9'] = JSON.parse(response.non_video_entertainment);
-        if (response.social_platforms) answers['10'] = JSON.parse(response.social_platforms);
-        if (response.social_media_time) answers['11'] = response.social_media_time;
-        if (response.content_preference) answers['12'] = JSON.parse(response.content_preference);
-        if (response.news_sources) answers['13'] = JSON.parse(response.news_sources);
-        if (response.news_frequency) answers['14'] = response.news_frequency;
-        if (response.knowledge_acquisition) answers['15'] = JSON.parse(response.knowledge_acquisition);
-        if (response.age_group) answers['16'] = response.age_group;
-        if (response.gender) answers['17'] = response.gender;
-        if (response.region) answers['18'] = response.region;
-        if (response.occupation) answers['19'] = response.occupation;
-        if (response.income_level) answers['20'] = response.income_level;
+        if (responseData.ai_agent_awareness) answers['1'] = responseData.ai_agent_awareness;
+        if (responseData.ai_usage_purpose) answers['2'] = JSON.parse(String(responseData.ai_usage_purpose));
+        if (responseData.ai_usage_frequency) answers['3'] = responseData.ai_usage_frequency;
+        if (responseData.device_type) answers['4'] = responseData.device_type;
+        if (responseData.screen_time) answers['5'] = responseData.screen_time;
+        if (responseData.most_used_app) answers['6'] = JSON.parse(String(responseData.most_used_app));
+        if (responseData.video_platforms) answers['7'] = JSON.parse(String(responseData.video_platforms));
+        if (responseData.video_watch_time) answers['8'] = responseData.video_watch_time;
+        if (responseData.non_video_entertainment) answers['9'] = JSON.parse(String(responseData.non_video_entertainment));
+        if (responseData.social_platforms) answers['10'] = JSON.parse(String(responseData.social_platforms));
+        if (responseData.social_media_time) answers['11'] = responseData.social_media_time;
+        if (responseData.content_preference) answers['12'] = JSON.parse(String(responseData.content_preference));
+        if (responseData.news_sources) answers['13'] = JSON.parse(String(responseData.news_sources));
+        if (responseData.news_frequency) answers['14'] = responseData.news_frequency;
+        if (responseData.knowledge_acquisition) answers['15'] = JSON.parse(String(responseData.knowledge_acquisition));
+        if (responseData.age_group) answers['16'] = responseData.age_group;
+        if (responseData.gender) answers['17'] = responseData.gender;
+        if (responseData.region) answers['18'] = responseData.region;
+        if (responseData.occupation) answers['19'] = responseData.occupation;
+        if (responseData.income_level) answers['20'] = responseData.income_level;
 
         const migrationData = {
           answers: answers,
-          originalTimestamp: response.created_at
+          originalTimestamp: responseData.created_at
         };
 
         const metadata = {
-          ipAddress: response.ip_address,
-          userAgent: response.user_agent
+          ipAddress: responseData.ip_address ? String(responseData.ip_address) : undefined,
+          userAgent: responseData.user_agent ? String(responseData.user_agent) : undefined
         };
 
         await saveSurveyResponse(migrationData, metadata);
@@ -101,7 +102,7 @@ async function migrateToPostgres() {
           console.log(`📈 Migrated ${migratedCount}/${responsesCount.count} responses...`);
         }
       } catch (error) {
-        console.error(`❌ Error migrating response ${response.id}:`, error);
+        console.error(`❌ Error migrating response:`, error);
       }
     }
 

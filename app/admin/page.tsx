@@ -26,9 +26,9 @@ interface Question {
 interface DetailedResponse {
   id: number;
   created_at: string;
-  answers: any;
+  answers: Record<string, unknown> | null;
   raw_data: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export default function ResponsesPage() {
@@ -73,11 +73,11 @@ export default function ResponsesPage() {
     }
   };
 
-  const getAnswerDisplay = (question: Question, answer: any) => {
+  const getAnswerDisplay = (question: Question, answer: unknown): string => {
     if (!answer) return '-';
     
     if (question.type === 'text') {
-      return answer;
+      return String(answer);
     }
     
     if (question.type === 'multiple' && Array.isArray(answer)) {
@@ -88,8 +88,8 @@ export default function ResponsesPage() {
     }
     
     if (question.type === 'single') {
-      const option = question.options?.find(opt => opt.value === answer);
-      return language === 'zh' ? (option?.label || answer) : (option?.label_en || option?.label || answer);
+      const option = question.options?.find(opt => opt.value === String(answer));
+      return language === 'zh' ? (option?.label || String(answer)) : (option?.label_en || option?.label || String(answer));
     }
     
     return String(answer);

@@ -65,7 +65,7 @@ export async function initDatabase() {
 }
 
 // Save survey response
-export async function saveSurveyResponse(data: any, metadata?: { ipAddress?: string; userAgent?: string }) {
+export async function saveSurveyResponse(data: { answers?: Record<string, unknown>; [key: string]: unknown }, metadata?: { ipAddress?: string; userAgent?: string }) {
   const sql = getSQL();
   // Extract answers from the submitted data
   const answers = data.answers || {};
@@ -82,7 +82,7 @@ export async function saveSurveyResponse(data: any, metadata?: { ipAddress?: str
       ${JSON.stringify(answers)},
       ${JSON.stringify(data)}
     ) RETURNING id
-  `;
+  ` as Array<{ id: number }>;
 
   return {
     id: result[0].id,
@@ -93,14 +93,14 @@ export async function saveSurveyResponse(data: any, metadata?: { ipAddress?: str
 // Get all survey responses
 export async function getAllResponses() {
   const sql = getSQL();
-  const responses = await sql`SELECT * FROM survey_responses ORDER BY created_at DESC`;
+  const responses = await sql`SELECT * FROM survey_responses ORDER BY created_at DESC` as Array<Record<string, unknown>>;
   return responses;
 }
 
 // Get responses count
 export async function getResponsesCount() {
   const sql = getSQL();
-  const result = await sql`SELECT COUNT(*) as count FROM survey_responses`;
+  const result = await sql`SELECT COUNT(*) as count FROM survey_responses` as Array<{ count: number }>;
   return { count: Number(result[0].count) };
 }
 
@@ -111,7 +111,7 @@ export async function getResponsesByDateRange(startDate: string, endDate: string
     SELECT * FROM survey_responses 
     WHERE created_at >= ${startDate} AND created_at <= ${endDate}
     ORDER BY created_at DESC
-  `;
+  ` as Array<Record<string, unknown>>;
   return responses;
 }
 
@@ -121,15 +121,15 @@ export async function getAllQuestions() {
   const questions = await sql`
     SELECT * FROM survey_questions 
     ORDER BY sort_order, id
-  `;
+  ` as Array<Record<string, unknown>>;
   
   const questionsWithOptions = await Promise.all(
-    questions.map(async (q: any) => {
+    questions.map(async (q: Record<string, unknown>) => {
       const options = await sql`
         SELECT * FROM survey_options 
         WHERE question_id = ${q.id} 
         ORDER BY sort_order, id
-      `;
+      ` as Array<Record<string, unknown>>;
       
       return {
         ...q,
@@ -143,7 +143,17 @@ export async function getAllQuestions() {
 }
 
 // Insert question
-export async function insertQuestion(question: any) {
+interface QuestionData {
+  id: number;
+  section: string;
+  sectionEn?: string;
+  question: string;
+  questionEn?: string;
+  type: string;
+  required?: boolean;
+}
+
+export async function insertQuestion(question: QuestionData) {
   const sql = getSQL();
   const result = await sql`
     INSERT INTO survey_questions (
@@ -161,13 +171,19 @@ export async function insertQuestion(question: any) {
     )
     ON CONFLICT (id) DO NOTHING
     RETURNING id
-  `;
+  ` as Array<{ id: number }>;
   
   return result;
 }
 
 // Insert option
-export async function insertOption(questionId: number, option: any, sortOrder: number) {
+interface OptionData {
+  value: string;
+  label: string;
+  labelEn?: string;
+}
+
+export async function insertOption(questionId: number, option: OptionData, sortOrder: number) {
   const sql = getSQL();
   const result = await sql`
     INSERT INTO survey_options (
@@ -180,7 +196,7 @@ export async function insertOption(questionId: number, option: any, sortOrder: n
       ${sortOrder}
     )
     RETURNING id
-  `;
+  ` as Array<{ id: number }>;
   
   return result;
 }
@@ -188,20 +204,20 @@ export async function insertOption(questionId: number, option: any, sortOrder: n
 // Check if questions exist
 export async function hasQuestions() {
   const sql = getSQL();
-  const result = await sql`SELECT COUNT(*) as count FROM survey_questions`;
+  const result = await sql`SELECT COUNT(*) as count FROM survey_questions` as Array<{ count: number }>;
   return Number(result[0].count) > 0;
 }
 
 // Get statistics for dashboard
 export async function getStatistics() {
   const sql = getSQL();
-  const totalResponsesResult = await sql`SELECT COUNT(*) as count FROM survey_responses`;
+  const totalResponsesResult = await sql`SELECT COUNT(*) as count FROM survey_responses` as Array<{ count: number }>;
   const totalResponses = Number(totalResponsesResult[0].count);
   
   const todayResponsesResult = await sql`
     SELECT COUNT(*) as count FROM survey_responses 
     WHERE DATE(created_at) = CURRENT_DATE
-  `;
+  ` as Array<{ count: number }>;
   const todayResponses = Number(todayResponsesResult[0].count);
   
   // Extract statistics from JSON answers
@@ -210,7 +226,7 @@ export async function getStatistics() {
     FROM survey_responses 
     WHERE answers->>'4' IS NOT NULL
     GROUP BY answers->>'4'
-  `;
+  ` as Array<{ device_type: string; count: number }>;
   
   const ageStats = await sql`
     SELECT answers->>'12' as age_group, COUNT(*) as count 
@@ -218,23 +234,23 @@ export async function getStatistics() {
     WHERE answers->>'12' IS NOT NULL
     GROUP BY answers->>'12'
     ORDER BY answers->>'12'
-  `;
+  ` as Array<{ age_group: string; count: number }>;
   
   const genderStats = await sql`
     SELECT answers->>'13' as gender, COUNT(*) as count 
     FROM survey_responses 
     WHERE answers->>'13' IS NOT NULL
     GROUP BY answers->>'13'
-  `;
+  ` as Array<{ gender: string; count: number }>;
   
-  const regionStats: any[] = []; // No region data in new structure
+  const regionStats: Array<{ region: string; count: number }> = []; // No region data in new structure
   
   const aiUsageStats = await sql`
     SELECT answers->>'1' as ai_agent_awareness, COUNT(*) as count 
     FROM survey_responses 
     WHERE answers->>'1' IS NOT NULL
     GROUP BY answers->>'1'
-  `;
+  ` as Array<{ ai_agent_awareness: string; count: number }>;
   
   const dailyStats = await sql`
     SELECT DATE(created_at) as date, COUNT(*) as count 
@@ -242,7 +258,7 @@ export async function getStatistics() {
     GROUP BY DATE(created_at)
     ORDER BY date DESC
     LIMIT 30
-  `;
+  ` as Array<{ date: string; count: number }>;
   
   return {
     totalResponses,

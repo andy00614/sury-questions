@@ -88,7 +88,7 @@ export function initDatabase() {
 }
 
 // Save survey response
-export function saveSurveyResponse(data: any, metadata?: { ipAddress?: string; userAgent?: string }) {
+export function saveSurveyResponse(data: { answers?: Record<string, unknown>; [key: string]: unknown }, metadata?: { ipAddress?: string; userAgent?: string }) {
   const stmt = db.prepare(`
     INSERT INTO survey_responses (
       ip_address,
@@ -179,7 +179,7 @@ export function getAllQuestions() {
   const questions = db.prepare(`
     SELECT * FROM survey_questions 
     ORDER BY sort_order, id
-  `).all();
+  `).all() as Array<Record<string, unknown>>;
   
   const getOptions = db.prepare(`
     SELECT * FROM survey_options 
@@ -187,7 +187,7 @@ export function getAllQuestions() {
     ORDER BY sort_order, id
   `);
   
-  return questions.map((q: any) => ({
+  return questions.map((q: Record<string, unknown>) => ({
     ...q,
     required: q.required === 1,
     options: getOptions.all(q.id)
@@ -195,7 +195,17 @@ export function getAllQuestions() {
 }
 
 // Insert question
-export function insertQuestion(question: any) {
+interface QuestionData {
+  id: number;
+  section: string;
+  sectionEn?: string;
+  question: string;
+  questionEn?: string;
+  type: string;
+  required?: boolean;
+}
+
+export function insertQuestion(question: QuestionData) {
   const stmt = db.prepare(`
     INSERT INTO survey_questions (
       id, section, section_en, question, question_en, 
@@ -216,7 +226,13 @@ export function insertQuestion(question: any) {
 }
 
 // Insert option
-export function insertOption(questionId: number, option: any, sortOrder: number) {
+interface OptionData {
+  value: string;
+  label: string;
+  labelEn?: string;
+}
+
+export function insertOption(questionId: number, option: OptionData, sortOrder: number) {
   const stmt = db.prepare(`
     INSERT INTO survey_options (
       question_id, value, label, label_en, sort_order

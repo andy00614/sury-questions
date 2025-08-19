@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getAllQuestions } from '@/lib/db';
+import { getAllQuestions, initDatabase } from '@/lib/db-postgres';
+import { initializeQuestions } from '@/lib/init-questions-postgres';
 
 export async function GET() {
   try {
-    const questions = getAllQuestions();
+    await initDatabase();
+    await initializeQuestions();
+    const questions = await getAllQuestions();
     
     return NextResponse.json({
       success: true,

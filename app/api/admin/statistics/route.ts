@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getStatistics } from '@/lib/db';
+import { getStatistics, initDatabase } from '@/lib/db-postgres';
 
 export async function GET() {
   try {
-    const statistics = getStatistics();
+    await initDatabase();
+    const statistics = await getStatistics();
     
     return NextResponse.json({
       success: true,

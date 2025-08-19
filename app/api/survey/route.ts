@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { saveSurveyResponse } from '@/lib/db';
+import { saveSurveyResponse, initDatabase } from '@/lib/db-postgres';
 
 export async function POST(request: NextRequest) {
   try {
+    await initDatabase();
     const body = await request.json();
     
     // Get metadata
@@ -12,7 +13,7 @@ export async function POST(request: NextRequest) {
     };
     
     // Save to database
-    const result = saveSurveyResponse(body, metadata);
+    const result = await saveSurveyResponse(body, metadata);
     
     console.log('Survey submission saved:', {
       id: result.id,

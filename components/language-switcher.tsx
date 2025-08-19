@@ -29,7 +29,7 @@ export default function LanguageSwitcher({ variant = 'default', className = '' }
           onClick={toggleLanguage}
           variant="outline"
           size="sm"
-          className="bg-white/80 backdrop-blur-sm border-gray-200 hover:bg-white hover:shadow-lg transition-all duration-300"
+          className="bg-white/80 backdrop-blur-sm border-gray-200 hover:bg-white hover:shadow-lg hover:text-gray-900 transition-all duration-300"
         >
           <Globe className="w-4 h-4 mr-2" />
           {language === 'zh' ? 'EN' : '中文'}

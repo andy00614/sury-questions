@@ -9,6 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useLanguage } from "@/lib/language-context";
+import LanguageSwitcher from "./language-switcher";
 
 interface Question {
   id: number;
@@ -26,6 +28,7 @@ interface Question {
 }
 
 export default function SurveyForm() {
+  const { t, language } = useLanguage();
   const [surveyQuestions, setSurveyQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string | string[]>>({});
@@ -52,21 +55,27 @@ export default function SurveyForm() {
 
   if (isLoading) {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardContent className="p-8 text-center">
-          <p>加载问卷中...</p>
-        </CardContent>
-      </Card>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <LanguageSwitcher variant="floating" />
+        <Card className="w-full max-w-2xl mx-auto">
+          <CardContent className="p-8 text-center">
+            <p>{t('survey.loading')}</p>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   if (surveyQuestions.length === 0) {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardContent className="p-8 text-center">
-          <p>暂无问卷题目</p>
-        </CardContent>
-      </Card>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <LanguageSwitcher variant="floating" />
+        <Card className="w-full max-w-2xl mx-auto">
+          <CardContent className="p-8 text-center">
+            <p>{t('survey.no_questions')}</p>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -130,26 +139,27 @@ export default function SurveyForm() {
       if (response.ok) {
         setIsSubmitted(true);
       } else {
-        alert('提交失败，请重试');
+        alert(language === 'zh' ? '提交失败，请重试' : 'Submission failed, please try again');
       }
     } catch (error) {
       console.error('Submit error:', error);
-      alert('提交失败，请重试');
+      alert(language === 'zh' ? '提交失败，请重试' : 'Submission failed, please try again');
     }
   };
 
   if (isSubmitted) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-8">
+        <LanguageSwitcher variant="floating" />
         <div className="text-center max-w-sm">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-3">提交成功</h2>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-3">{t('survey.success.title')}</h2>
           <p className="text-gray-500 leading-relaxed">
-            感谢您抽出宝贵时间参与我们的调查，您的反馈对我们非常重要。
+            {t('survey.success.message')}
           </p>
         </div>
       </div>
@@ -158,12 +168,13 @@ export default function SurveyForm() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
+      <LanguageSwitcher variant="floating" />
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2">
               <span className="text-lg font-semibold text-slate-800">
-                问题 {currentQuestionIndex + 1}
+                {t('survey.question')} {currentQuestionIndex + 1}
               </span>
               <span className="text-sm text-slate-500 font-medium">
                 / {surveyQuestions.length}
@@ -176,13 +187,13 @@ export default function SurveyForm() {
         <Card>
           <CardHeader>
             <div className="text-sm text-blue-600 font-medium mb-2">
-              {currentQuestion.section}
+              {language === 'zh' ? currentQuestion.section : (currentQuestion.section_en || currentQuestion.section)}
             </div>
             <CardTitle className="text-lg leading-relaxed">
-              {currentQuestion.question}
+              {language === 'zh' ? currentQuestion.question : (currentQuestion.question_en || currentQuestion.question)}
             </CardTitle>
             {currentQuestion.required && (
-              <span className="text-red-500 text-sm">* 必填</span>
+              <span className="text-red-500 text-sm">* {t('survey.required')}</span>
             )}
           </CardHeader>
           <CardContent className="space-y-4">
@@ -195,7 +206,7 @@ export default function SurveyForm() {
                   <div key={option.value} className="flex items-center space-x-2">
                     <RadioGroupItem value={option.value} id={option.value} />
                     <Label htmlFor={option.value} className="text-sm leading-relaxed cursor-pointer">
-                      {option.label}
+                      {language === 'zh' ? option.label : (option.label_en || option.label)}
                     </Label>
                   </div>
                 ))}
@@ -214,7 +225,7 @@ export default function SurveyForm() {
                       }
                     />
                     <Label htmlFor={option.value} className="text-sm leading-relaxed cursor-pointer">
-                      {option.label}
+                      {language === 'zh' ? option.label : (option.label_en || option.label)}
                     </Label>
                   </div>
                 ))}
@@ -223,7 +234,7 @@ export default function SurveyForm() {
 
             {currentQuestion.type === 'text' && (
               <Textarea
-                placeholder="请输入您的回答..."
+                placeholder={t('survey.placeholder.text')}
                 value={answers[currentQuestion.id] as string || ''}
                 onChange={(e) => handleTextInput(currentQuestion.id, e.target.value)}
                 className="min-h-[100px]"
@@ -240,7 +251,7 @@ export default function SurveyForm() {
             className="flex items-center gap-2"
           >
             <ChevronLeft className="w-4 h-4" />
-            上一题
+            {t('survey.previous')}
           </Button>
 
           {currentQuestionIndex === surveyQuestions.length - 1 ? (
@@ -249,7 +260,7 @@ export default function SurveyForm() {
               disabled={!canGoNext()}
               className="flex items-center gap-2"
             >
-              提交问卷
+              {t('survey.submit')}
             </Button>
           ) : (
             <Button
@@ -257,7 +268,7 @@ export default function SurveyForm() {
               disabled={!canGoNext()}
               className="flex items-center gap-2"
             >
-              下一题
+              {t('survey.next')}
               <ChevronRight className="w-4 h-4" />
             </Button>
           )}

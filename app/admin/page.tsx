@@ -4,11 +4,15 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   BarChart, Bar, PieChart, Pie, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
+  XAxis, YAxis, CartesianGrid, Tooltip, 
   ResponsiveContainer, Cell 
 } from "recharts";
-import { Users, TrendingUp, Calendar, Smartphone } from "lucide-react";
+import { Users, TrendingUp, Calendar, Smartphone, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
+import { useLanguage } from "@/lib/language-context";
+import LanguageSwitcher from "@/components/language-switcher";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -34,6 +38,7 @@ interface Response {
 }
 
 export default function AdminDashboard() {
+  const { t } = useLanguage();
   const [statistics, setStatistics] = useState<Statistics | null>(null);
   const [responses, setResponses] = useState<Response[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,61 +73,41 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-8">
+        <LanguageSwitcher variant="floating" />
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">加载中...</h1>
+          <h1 className="text-3xl font-bold mb-8">{t('common.loading')}</h1>
         </div>
       </div>
     );
   }
 
   const formatGenderLabel = (value: string) => {
-    const labels: Record<string, string> = {
-      'male': '男性',
-      'female': '女性',
-      'other': '其他'
-    };
-    return labels[value] || value;
+    return t(`gender.${value}`) || value;
   };
 
   const formatDeviceLabel = (value: string) => {
-    const labels: Record<string, string> = {
-      'android': '安卓',
-      'ios': '苹果'
-    };
-    return labels[value] || value;
+    return t(`device.${value}`) || value;
   };
 
   const formatAgeLabel = (value: string) => {
-    const labels: Record<string, string> = {
-      'under_18': '18岁以下',
-      '18_24': '18-24岁',
-      '25_34': '25-34岁',
-      '35_44': '35-44岁',
-      '45_54': '45-54岁',
-      '55_plus': '55岁以上'
-    };
-    return labels[value] || value;
+    return t(`age.${value}`) || value;
   };
 
   const formatAIAwarenessLabel = (value: string) => {
-    const labels: Record<string, string> = {
-      'heard_used': '听说过并使用',
-      'heard_not_used': '听说过但没用过',
-      'never_heard': '没听说过'
-    };
-    return labels[value] || value;
+    return t(`ai.${value}`) || value;
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+      <LanguageSwitcher variant="floating" />
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">调查问卷数据分析后台</h1>
+        <h1 className="text-3xl font-bold mb-8">{t('admin.title')}</h1>
         
         {/* 统计卡片 */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">总响应数</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('admin.total_responses')}</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -132,7 +117,7 @@ export default function AdminDashboard() {
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">今日响应</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('admin.today_responses')}</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -142,7 +127,7 @@ export default function AdminDashboard() {
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">设备分布</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('admin.device_types')}</CardTitle>
               <Smartphone className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -158,7 +143,7 @@ export default function AdminDashboard() {
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">平均每日</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('admin.daily_average')}</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -176,7 +161,7 @@ export default function AdminDashboard() {
           {/* 性别分布饼图 */}
           <Card>
             <CardHeader>
-              <CardTitle>性别分布</CardTitle>
+              <CardTitle>{t('admin.gender_distribution')}</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -189,12 +174,12 @@ export default function AdminDashboard() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {statistics?.genderStats.map((entry, index) => (
+                    {statistics?.genderStats.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -207,7 +192,7 @@ export default function AdminDashboard() {
           {/* 年龄分布柱状图 */}
           <Card>
             <CardHeader>
-              <CardTitle>年龄分布</CardTitle>
+              <CardTitle>{t('admin.age_distribution')}</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -228,7 +213,7 @@ export default function AdminDashboard() {
           {/* AI认知度饼图 */}
           <Card>
             <CardHeader>
-              <CardTitle>AI助手认知度</CardTitle>
+              <CardTitle>{t('admin.ai_awareness')}</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -241,7 +226,7 @@ export default function AdminDashboard() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
@@ -259,7 +244,7 @@ export default function AdminDashboard() {
           {/* 每日提交趋势 */}
           <Card>
             <CardHeader>
-              <CardTitle>每日提交趋势</CardTitle>
+              <CardTitle>{t('admin.daily_trend')}</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -280,21 +265,27 @@ export default function AdminDashboard() {
 
         {/* 数据表格 */}
         <Card>
-          <CardHeader>
-            <CardTitle>最近提交的调查数据</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>{t('admin.recent_data')}</CardTitle>
+            <Link href="/admin/responses">
+              <Button variant="outline" size="sm">
+                <ExternalLink className="w-4 h-4 mr-2" />
+                {t('admin.view_all_responses')}
+              </Button>
+            </Link>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-2">ID</th>
-                    <th className="text-left p-2">提交时间</th>
-                    <th className="text-left p-2">性别</th>
-                    <th className="text-left p-2">年龄段</th>
-                    <th className="text-left p-2">地区</th>
-                    <th className="text-left p-2">设备类型</th>
-                    <th className="text-left p-2">AI认知</th>
+                    <th className="text-left p-2">{t('admin.table.id')}</th>
+                    <th className="text-left p-2">{t('admin.table.time')}</th>
+                    <th className="text-left p-2">{t('admin.table.gender')}</th>
+                    <th className="text-left p-2">{t('admin.table.age')}</th>
+                    <th className="text-left p-2">{t('admin.table.region')}</th>
+                    <th className="text-left p-2">{t('admin.table.device')}</th>
+                    <th className="text-left p-2">{t('admin.table.ai_awareness')}</th>
                   </tr>
                 </thead>
                 <tbody>

@@ -64,6 +64,7 @@ const translations = {
     'admin.table.region': '地区',
     'admin.table.device': '设备类型',
     'admin.table.ai_awareness': 'AI认知',
+    'admin.view_all_responses': '查看所有回答',
     
     // 通用
     'common.loading': '加载中...',
@@ -143,6 +144,7 @@ const translations = {
     'admin.table.region': 'Region',
     'admin.table.device': 'Device Type',
     'admin.table.ai_awareness': 'AI Awareness',
+    'admin.view_all_responses': 'View All Responses',
     
     // 通用
     'common.loading': 'Loading...',
@@ -227,6 +229,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     // 如果都没有，返回key本身
     return key;
   };
+
+  // 更新HTML lang属性
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = language;
+    }
+  }, [language]);
 
   // 在初始化完成前显示加载状态
   if (!isInitialized) {

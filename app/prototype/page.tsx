@@ -195,7 +195,7 @@ export default function PrototypePage() {
                   <div className="space-y-3">
                     <h1 className="text-2xl lg:text-3xl font-bold">Interactive Prototype Research</h1>
                     <p className="text-muted-foreground text-base leading-relaxed max-w-xl mx-auto">
-                      Welcome to our user experience research! You'll experience an interactive learning app prototype and then share your feedback.
+                      Welcome to our user experience research! You&apos;ll experience an interactive learning app prototype and then share your feedback.
                     </p>
                   </div>
                   <div className="bg-muted/50 rounded-lg p-4 text-left space-y-2 max-w-md mx-auto">

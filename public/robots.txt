@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://your-domain.com/sitemap.xml
+
+# Admin and API endpoints
+Disallow: /admin/
+Disallow: /api/
+
+# Temporary or sensitive pages
+Disallow: /*?*
+
+# Allow important pages
+Allow: /
+Allow: /prototype
+
+# Crawl delay (optional)
+Crawl-delay: 1

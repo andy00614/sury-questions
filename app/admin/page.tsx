@@ -49,10 +49,10 @@ export default function ResponsesPage() {
         fetch('/api/survey/stats'),
         fetch('/api/survey/questions')
       ]);
-      
+
       const responsesData = await responsesRes.json();
       const questionsData = await questionsRes.json();
-      
+
       if (responsesData.success) {
         setResponses(responsesData.responses);
       }
@@ -76,23 +76,23 @@ export default function ResponsesPage() {
 
   const getAnswerDisplay = (question: Question, answer: unknown): string => {
     if (!answer) return '-';
-    
+
     if (question.type === 'text') {
       return String(answer);
     }
-    
+
     if (question.type === 'multiple' && Array.isArray(answer)) {
       return answer.map(value => {
         const option = question.options?.find(opt => opt.value === value);
         return language === 'zh' ? (option?.label || value) : (option?.label_en || option?.label || value);
       }).join(', ');
     }
-    
+
     if (question.type === 'single') {
       const option = question.options?.find(opt => opt.value === String(answer));
       return language === 'zh' ? (option?.label || String(answer)) : (option?.label_en || option?.label || String(answer));
     }
-    
+
     return String(answer);
   };
 
@@ -116,8 +116,8 @@ export default function ResponsesPage() {
         <LanguageSwitcher variant="floating" />
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center mb-6">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => setSelectedResponse(null)}
               className="mr-4"
             >
@@ -228,7 +228,7 @@ export default function ResponsesPage() {
                               </Button>
                             </TableCell>
                             <TableCell className="font-mono text-xs">
-                              {format(addHours(new Date(response.created_at), 8), 'MM-dd HH:mm')}
+                              {format(addHours(new Date(response.created_at), 0), 'MM-dd HH:mm')}
                             </TableCell>
                             {/* Q1: AI认知 */}
                             <TableCell>

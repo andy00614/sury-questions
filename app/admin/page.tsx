@@ -182,33 +182,8 @@ export default function ResponsesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="relative overflow-hidden">
-              {/* Fixed Details column */}
-              <div className="absolute right-0 top-0 bottom-0 w-20 bg-background border-l z-30 shadow-xl">
-                <div className="h-full flex flex-col">
-                  {/* Header */}
-                  <div className="h-12 bg-muted/50 border-b flex items-center justify-center text-sm font-medium">
-                    {language === 'zh' ? '详情' : 'Details'}
-                  </div>
-                  {/* Body */}
-                  <div className="flex-1 overflow-y-auto">
-                    {responses.map((response) => (
-                      <div key={response.id} className="h-12 border-b flex items-center justify-center">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setSelectedResponse(response)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              {/* Scrollable table container with right padding for fixed column */}
-              <div className="overflow-x-auto pr-20">
+            <div className="overflow-hidden">
+              <div className="overflow-x-auto">
                 <div className="min-w-[1920px] relative">
                   <Table>
                     <TableHeader>
@@ -232,6 +207,9 @@ export default function ResponsesPage() {
                         <TableHead className="w-24">Q15: {language === 'zh' ? '学历' : 'Education'}</TableHead>
                         <TableHead className="w-28">Q16: {language === 'zh' ? '参与意愿' : 'Participation'}</TableHead>
                         <TableHead className="w-40">Q17: {language === 'zh' ? '联系方式' : 'Contact Info'}</TableHead>
+                        <TableHead className="sticky right-0 bg-muted/50 z-20 border-l w-20 text-center">
+                          {language === 'zh' ? '详情' : 'Details'}
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -241,7 +219,13 @@ export default function ResponsesPage() {
                         return (
                           <TableRow key={response.id}>
                             <TableCell className="sticky left-0 bg-background z-10 border-r font-medium">
-                              {response.id}
+                              <Button
+                                variant="link"
+                                onClick={() => setSelectedResponse(response)}
+                                className="h-auto px-0 py-0 font-semibold text-blue-600 hover:underline justify-start"
+                              >
+                                {response.id}
+                              </Button>
                             </TableCell>
                             <TableCell className="font-mono text-xs">
                               {format(addHours(new Date(response.created_at), 8), 'MM-dd HH:mm')}
@@ -346,6 +330,18 @@ export default function ResponsesPage() {
                             <TableCell>
                               <div className="text-xs max-w-40 truncate">
                                 {getAnswerDisplay(questions.find(q => q.id === 17) || { id: 17, section: '', question: '', type: 'text', options: [] }, answers['17'])}
+                              </div>
+                            </TableCell>
+                            <TableCell className="sticky right-0 bg-background z-20 border-l w-20">
+                              <div className="flex justify-center">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setSelectedResponse(response)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </Button>
                               </div>
                             </TableCell>
                           </TableRow>

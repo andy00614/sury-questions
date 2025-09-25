@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ArrowLeft, Eye } from "lucide-react";
-import { format } from "date-fns";
+import { format, addHours } from "date-fns";
 import { useLanguage } from "@/lib/language-context";
 import LanguageSwitcher from "@/components/language-switcher";
 import Link from "next/link";
@@ -130,7 +130,7 @@ export default function ResponsesPage() {
           </div>
 
           <div className="mb-4 text-sm text-gray-600">
-            {language === 'zh' ? '提交时间' : 'Submitted'}: {format(new Date(selectedResponse.created_at), 'yyyy-MM-dd HH:mm:ss')}
+            {language === 'zh' ? '提交时间' : 'Submitted'}: {format(addHours(new Date(selectedResponse.created_at), 8), 'yyyy-MM-dd HH:mm:ss')}
           </div>
 
           <div className="space-y-6">
@@ -182,10 +182,34 @@ export default function ResponsesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="relative">
-              {/* Scrollable table container */}
-              <div className="overflow-x-auto max-w-full">
-                <div className="min-w-[2000px] relative">
+            <div className="relative overflow-hidden">
+              {/* Fixed Details column */}
+              <div className="absolute right-0 top-0 bottom-0 w-20 bg-background border-l z-30 shadow-xl">
+                <div className="h-full flex flex-col">
+                  {/* Header */}
+                  <div className="h-12 bg-muted/50 border-b flex items-center justify-center text-sm font-medium">
+                    {language === 'zh' ? '详情' : 'Details'}
+                  </div>
+                  {/* Body */}
+                  <div className="flex-1 overflow-y-auto">
+                    {responses.map((response) => (
+                      <div key={response.id} className="h-12 border-b flex items-center justify-center">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setSelectedResponse(response)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              {/* Scrollable table container with right padding for fixed column */}
+              <div className="overflow-x-auto pr-20">
+                <div className="min-w-[1920px] relative">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/50">
@@ -208,9 +232,6 @@ export default function ResponsesPage() {
                         <TableHead className="w-24">Q15: {language === 'zh' ? '学历' : 'Education'}</TableHead>
                         <TableHead className="w-28">Q16: {language === 'zh' ? '参与意愿' : 'Participation'}</TableHead>
                         <TableHead className="w-40">Q17: {language === 'zh' ? '联系方式' : 'Contact Info'}</TableHead>
-                        <TableHead className="sticky right-0 bg-muted/50 z-20 border-l w-20 text-center shadow-lg">
-                          {language === 'zh' ? '详情' : 'Details'}
-                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -223,7 +244,7 @@ export default function ResponsesPage() {
                               {response.id}
                             </TableCell>
                             <TableCell className="font-mono text-xs">
-                              {format(new Date(response.created_at), 'MM-dd HH:mm')}
+                              {format(addHours(new Date(response.created_at), 8), 'MM-dd HH:mm')}
                             </TableCell>
                             {/* Q1: AI认知 */}
                             <TableCell>
@@ -326,16 +347,6 @@ export default function ResponsesPage() {
                               <div className="text-xs max-w-40 truncate">
                                 {getAnswerDisplay(questions.find(q => q.id === 17) || { id: 17, section: '', question: '', type: 'text', options: [] }, answers['17'])}
                               </div>
-                            </TableCell>
-                            <TableCell className="sticky right-0 bg-background z-20 border-l text-center shadow-lg">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setSelectedResponse(response)}
-                                className="h-8 w-8 p-0"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
                             </TableCell>
                           </TableRow>
                         );

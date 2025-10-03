@@ -54,6 +54,26 @@ export default function SurveyForm() {
     }
   };
 
+  // Filter questions based on conditional logic
+  const getVisibleQuestions = () => {
+    return surveyQuestions.filter(question => {
+      // Question 6 (Android price range) should only show if user selected "android" for question 4
+      if (question.id === 6) {
+        return answers[4] === 'android';
+      }
+      return true;
+    });
+  };
+
+  const visibleQuestions = getVisibleQuestions();
+
+  // Adjust current question index if the current question becomes invisible due to conditional logic
+  useEffect(() => {
+    if (visibleQuestions.length > 0 && currentQuestionIndex >= visibleQuestions.length) {
+      setCurrentQuestionIndex(Math.max(0, visibleQuestions.length - 1));
+    }
+  }, [visibleQuestions.length, currentQuestionIndex]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -67,7 +87,7 @@ export default function SurveyForm() {
     );
   }
 
-  if (surveyQuestions.length === 0) {
+  if (visibleQuestions.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <LanguageSwitcher variant="floating" />
@@ -80,11 +100,20 @@ export default function SurveyForm() {
     );
   }
 
-  const currentQuestion = surveyQuestions[currentQuestionIndex];
-  const progress = ((currentQuestionIndex + 1) / surveyQuestions.length) * 100;
+  const currentQuestion = visibleQuestions[currentQuestionIndex];
+  const progress = ((currentQuestionIndex + 1) / visibleQuestions.length) * 100;
 
   const handleSingleChoice = (questionId: number, value: string) => {
-    setAnswers(prev => ({ ...prev, [questionId]: value }));
+    setAnswers(prev => {
+      const newAnswers = { ...prev, [questionId]: value };
+
+      // If user changes device type answer (question 4), clear Android price answer (question 6)
+      if (questionId === 4 && value === 'ios') {
+        delete newAnswers[6];
+      }
+
+      return newAnswers;
+    });
   };
 
   const handleMultipleChoice = (questionId: number, value: string, checked: boolean) => {
@@ -116,7 +145,7 @@ export default function SurveyForm() {
   };
 
   const handleNext = () => {
-    if (currentQuestionIndex < surveyQuestions.length - 1) {
+    if (currentQuestionIndex < visibleQuestions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     }
   };
@@ -181,7 +210,7 @@ export default function SurveyForm() {
                 {t('survey.question')} {currentQuestionIndex + 1}
               </span>
               <span className="text-sm text-slate-500 font-medium">
-                / {surveyQuestions.length}
+                / {visibleQuestions.length}
               </span>
             </div>
           </div>
@@ -258,7 +287,7 @@ export default function SurveyForm() {
             {t('survey.previous')}
           </Button>
 
-          {currentQuestionIndex === surveyQuestions.length - 1 ? (
+          {currentQuestionIndex === visibleQuestions.length - 1 ? (
             <Button
               onClick={handleSubmit}
               disabled={!canGoNext() || isSubmitting}
